@@ -14,5 +14,6 @@ requests.post(
         "options": options,
         "is_anonymous": False,
         "allows_multiple_answers": False
-    }
+    },
+    timeout=20
 )
