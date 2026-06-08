@@ -4,7 +4,7 @@ TOKEN = os.environ["TG_TOKEN"]
 CHAT_ID = os.environ["TG_CHAT_ID"]
 
 question = "Hast du heute 100 Liegestütze gemacht?"
-options = ["Ja 💪", "Nein ❌"]
+options = ["Ja 💪", "Workout gemacht (Bild gesendet) 📸", "Nein ❌"]
 
 requests.post(
     f"https://api.telegram.org/bot{TOKEN}/sendPoll",
