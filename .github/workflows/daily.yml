@@ -2,7 +2,7 @@ name: Daily Telegram Poll
 
 on:
   schedule:
-    - cron: "0 8 * * *"   # 09:00 CET
+    - cron: "0 6 * * *"   # 07:00 CET
   workflow_dispatch:
 
 jobs:
