@@ -3,7 +3,7 @@ import os, requests
 TOKEN = os.environ["TG_TOKEN"]
 CHAT_ID = os.environ["TG_CHAT_ID"]
 
-question = "Hast du heute 115 Liegestütze gemacht?"
+question = "Hast du heute 120 Liegestütze gemacht?"
 options = ["Ja 💪", "Workout gemacht (Bild gesendet) 📸", "Nein ❌"]
 
 requests.post(
