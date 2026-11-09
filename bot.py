@@ -125,7 +125,21 @@ def eligible(member, day):
     return member['start'] <= day and (not member.get('end') or day < member['end'])
 
 
-def weekly_report(state, monday):
+def poll_date_link(poll, day, chat_id=None):
+    label = date.fromisoformat(day).strftime('%d.%m.')
+    chat = poll.get('chat_id', chat_id)
+    message = poll.get('message_id')
+    # Bot API supergroup IDs use the -100 prefix. Basic groups have no permalink.
+    if (not isinstance(chat, int) or not str(chat).startswith('-100')
+            or not isinstance(message, int) or isinstance(message, bool) or message <= 0):
+        return label
+    channel = str(chat)[4:]
+    if not channel or int(channel) <= 0:
+        return label
+    return f'<a href="https://t.me/c/{channel}/{message}">{label}</a>'
+
+
+def weekly_report(state, monday, chat_id=None):
     days = [(monday + timedelta(days=i)).isoformat() for i in range(7)]
     by_day = {p['day']: p for p in state['polls'].values() if p['day'] in days}
     uncertain = [d for d in days if d not in by_day or not by_day[d].get('complete')
@@ -144,7 +158,7 @@ def weekly_report(state, monday):
     lines = [title, '', 'Für diese Tage fehlt noch eure Antwort:' if missing else 'Alle haben geantwortet – danke euch! 🙌']
     for uid, days_missing in sorted(missing.items(), key=lambda item: state['members'][item[0]]['name']):
         name = html.escape(state['members'][uid]['name'])
-        lines.append(f'<a href="tg://user?id={int(uid)}">{name}</a>: ' + ', '.join(date.fromisoformat(d).strftime('%d.%m.') for d in days_missing))
+        lines.append(f'<a href="tg://user?id={int(uid)}">{name}</a>: ' + ', '.join(poll_date_link(by_day[d], d, chat_id) for d in days_missing))
     if missing:
         lines += ['', 'Bitte stimmt in den jeweiligen Umfragen ab oder bezahlt den vereinbarten Beitrag. Falls ihr bereits bezahlt habt, gebt bitte kurz Bescheid. 🙌', '', 'Diese Liste zeigt nur fehlende Abstimmungen. Zahlungen werden vom Bot nicht geprüft.']
     return '\n'.join(lines)
@@ -175,11 +189,13 @@ def run(tg, store, state, now, mode='auto'):
     if mode == 'report' or (mode == 'auto' and (now.weekday() > 0 or now.hour >= 8)):
         monday = now.date() - timedelta(days=now.weekday() + 7)
         send_once(tg, store, state, 'report:' + monday.isoformat(), 'sendMessage',
-                  {'text': weekly_report(state, monday), 'parse_mode': 'HTML'})
+                  {'text': weekly_report(state, monday, tg.chat), 'parse_mode': 'HTML',
+                   'link_preview_options': {'is_disabled': True}})
     if mode in ('auto', 'poll') and now.hour >= 7:
         def register(result):
             poll = result['poll']
             state['polls'][poll['id']] = {'day': today, 'message_id': result['message_id'],
+                                         'chat_id': result.get('chat', {}).get('id', tg.chat),
                                          'votes': {}, 'total': 0, 'complete': True}
         send_once(tg, store, state, 'poll:' + today, 'sendPoll',
                   {'question': f'{now:%d.%m.} · Hast du heute {daily_target(now.date())} Liegestütze gemacht?',

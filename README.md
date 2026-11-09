@@ -60,3 +60,12 @@ use the same date-based target as the poll. No further increases are assumed.
 
 Run `python -m unittest -v` locally or in Actions. Never print raw Requests
 exceptions: the request URL includes the bot token.
+
+## Links to missing polls
+
+Each missing date links to its original poll using Telegram's private message
+links (`https://t.me/c/<supergroup-id>/<message-id>`). These work only for group
+members. The bot records the chat and message ID with each new poll. Older stored
+polls with a message ID use the configured group ID. Historical imports without
+message IDs remain plain dates; no URLs or message IDs are guessed. Link previews
+are disabled in the weekly message. Existing weekly messages are not re-sent.
