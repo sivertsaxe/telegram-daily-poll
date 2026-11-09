@@ -1,19 +1,7 @@
-import os, requests
+"""Compatibility entry point; uses the same encrypted state and deduplication."""
+from datetime import datetime
+from bot import Telegram, Store, TZ, run
 
-TOKEN = os.environ["TG_TOKEN"]
-CHAT_ID = os.environ["TG_CHAT_ID"]
-
-question = "Hast du heute 125 Liegestütze gemacht?"
-options = ["Ja 💪", "Workout gemacht (Bild gesendet) 📸", "Nein ❌"]
-
-requests.post(
-    f"https://api.telegram.org/bot{TOKEN}/sendPoll",
-    json={
-        "chat_id": CHAT_ID,
-        "question": question,
-        "options": options,
-        "is_anonymous": False,
-        "allows_multiple_answers": False
-    },
-    timeout=20
-)
+if __name__ == '__main__':
+    store = Store()
+    run(Telegram(), store, store.load(), datetime.now(TZ), 'poll')
