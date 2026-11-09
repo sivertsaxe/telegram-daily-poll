@@ -1,7 +1,7 @@
 # Telegram challenge bot
 
 One scheduled workflow collects non-anonymous votes hourly, sends a dated daily
-125-push-up poll after 07:00 Europe/Berlin, reminds after 21:00, and reports the
+125-push-up poll after 07:00 Europe/Berlin and reports the
 previous Monday–Sunday after 08:00 Monday. Runs delayed past Monday catch up once.
 GitHub schedules are best effort, so these are earliest times, not delivery guarantees.
 
@@ -25,8 +25,8 @@ availability, prevent administrative disabling or overcome revoked credentials.
 Workflow errors fail visibly; check Actions and your GitHub failure notifications.
 
 Only this workflow may call getUpdates for this bot. An existing webhook stops
-collection safely. The separate reminder.py repository is retired after the new
-workflow has been verified, to avoid duplicate reminders.
+collection safely. The separate reminder.py repository retains the existing reminder schedule.
+This workflow does not send daily reminders, avoiding duplicates.
 
 ## Reliability
 

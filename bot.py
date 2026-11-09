@@ -131,20 +131,14 @@ def weekly_report(state, monday):
     title = f'📝 Fehlende Abstimmungen {monday:%d.%m.}–{monday + timedelta(days=6):%d.%m.%Y}'
     if uncertain:
         return title + '\n\nDie Datenerfassung ist unvollständig. Deshalb heute keine Tags wegen fehlender Antworten.\nBetroffene Tage: ' + ', '.join(date.fromisoformat(d).strftime('%d.%m.') for d in uncertain)
-    counts = [0, 0, 0]
-    expected = 0
     missing = {}
     for uid, member in state['members'].items():
         for day in days:
             if not eligible(member, day):
                 continue
-            expected += 1
             value = by_day[day]['votes'].get(uid)
             if value is None:
                 missing.setdefault(uid, []).append(day)
-            else:
-                counts[value] += 1
-    answered = sum(counts)
     lines = [title, '', 'Für diese Tage fehlt noch eure Antwort:' if missing else 'Alle haben geantwortet – danke euch! 🙌']
     for uid, days_missing in sorted(missing.items(), key=lambda item: state['members'][item[0]]['name']):
         name = html.escape(state['members'][uid]['name'])
@@ -188,9 +182,6 @@ def run(tg, store, state, now, mode='auto'):
         send_once(tg, store, state, 'poll:' + today, 'sendPoll',
                   {'question': f'{now:%d.%m.} · Hast du heute 125 Liegestütze gemacht?',
                    'options': [{'text': option} for option in OPTIONS], 'is_anonymous': False, 'allows_multiple_answers': False}, register)
-    if mode == 'auto' and now.hour >= 21 and 'poll:' + today in state['sent']:
-        send_once(tg, store, state, 'reminder:' + today, 'sendMessage',
-                  {'text': '⏰ Erinnerung: Bitte vergiss nicht abzustimmen! Auch ein ehrliches Nein zählt als Antwort. 🙌'})
     # Keep enough history for corrections and week comparisons; limit personal-data retention.
     cutoff = (now.date() - timedelta(days=90)).isoformat()
     state['polls'] = {k: p for k, p in state['polls'].items() if p['day'] >= cutoff}

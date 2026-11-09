@@ -3,7 +3,7 @@ import unittest
 from datetime import date, datetime, timedelta
 from unittest.mock import patch
 from cryptography.fernet import Fernet, InvalidToken
-from bot import apply_update, weekly_report, collect, send_once, ServiceError, TZ
+from bot import apply_update, weekly_report, collect, send_once, ServiceError, TZ, run
 
 
 def fixture():
@@ -86,6 +86,48 @@ class BotTest(unittest.TestCase):
                 return []
         collect(TG(), store, s, datetime(2026, 11, 9, 8, tzinfo=TZ))
         self.assertFalse(s['polls']['0']['complete'])
+
+    def test_report_mode_sends_only_one_reminder_across_retries(self):
+        s, store = fixture(), Store()
+        class TG:
+            chat = -1
+            sent = []
+            def call(self, method, **payload):
+                if method == 'getWebhookInfo':
+                    return {}
+                if method == 'getUpdates':
+                    return []
+                self.sent.append((method, payload))
+                return {'message_id': 42}
+        tg = TG()
+        now = datetime(2026, 11, 9, 8, tzinfo=TZ)
+        run(tg, store, s, now, 'report')
+        run(tg, store, s, now, 'report')
+        self.assertEqual(len(tg.sent), 1)
+        self.assertEqual(tg.sent[0][0], 'sendMessage')
+        self.assertNotIn('%', tg.sent[0][1]['text'])
+
+    def test_poll_uses_local_date_and_is_sent_once(self):
+        for day in ((2026, 3, 29), (2026, 10, 25)):
+            s, store = fixture(), Store()
+            class TG:
+                chat = -1
+                calls = 0
+                def call(self, method, **payload):
+                    if method == 'getWebhookInfo':
+                        return {}
+                    if method == 'getUpdates':
+                        return []
+                    self.calls += 1
+                    self.payload = payload
+                    return {'message_id': 5, 'poll': {'id': 'new'}}
+            tg = TG()
+            now = datetime(*day, 7, tzinfo=TZ)
+            run(tg, store, s, now, 'poll')
+            run(tg, store, s, now, 'poll')
+            self.assertEqual(tg.calls, 1)
+            self.assertEqual(s['polls']['new']['day'], now.date().isoformat())
+            self.assertFalse(tg.payload['is_anonymous'])
 
     def test_cipher_roundtrip_and_wrong_key(self):
         key = Fernet.generate_key()
