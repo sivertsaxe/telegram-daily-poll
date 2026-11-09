@@ -159,8 +159,6 @@ def weekly_report(state, monday, chat_id=None):
     for uid, days_missing in sorted(missing.items(), key=lambda item: state['members'][item[0]]['name']):
         name = html.escape(state['members'][uid]['name'])
         lines.append(f'<a href="tg://user?id={int(uid)}">{name}</a>: ' + ', '.join(poll_date_link(by_day[d], d, chat_id) for d in days_missing))
-    if missing:
-        lines += ['', 'Bitte stimmt in den jeweiligen Umfragen ab oder bezahlt den vereinbarten Beitrag. Falls ihr bereits bezahlt habt, gebt bitte kurz Bescheid. 🙌', '', 'Diese Liste zeigt nur fehlende Abstimmungen. Zahlungen werden vom Bot nicht geprüft.']
     return '\n'.join(lines)
 
 
