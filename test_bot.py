@@ -25,7 +25,8 @@ class Store:
 class BotTest(unittest.TestCase):
     def test_no_is_answer_and_join_date_limits_missing(self):
         text = weekly_report(fixture(), date(2026, 11, 2))
-        self.assertIn('7/8', text)
+        self.assertNotIn('%', text)
+        self.assertIn('bezahlt den vereinbarten Beitrag', text)
         self.assertIn('id=2', text)
         self.assertNotIn('id=1', text)
         self.assertIn('08.11.', text)

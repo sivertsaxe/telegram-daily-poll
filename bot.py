@@ -128,7 +128,7 @@ def weekly_report(state, monday):
     by_day = {p['day']: p for p in state['polls'].values() if p['day'] in days}
     uncertain = [d for d in days if d not in by_day or not by_day[d].get('complete')
                  or by_day[d].get('total') != len(by_day[d]['votes'])]
-    title = f'📊 Wochenübersicht {monday:%d.%m.}–{monday + timedelta(days=6):%d.%m.%Y}'
+    title = f'📝 Fehlende Abstimmungen {monday:%d.%m.}–{monday + timedelta(days=6):%d.%m.%Y}'
     if uncertain:
         return title + '\n\nDie Datenerfassung ist unvollständig. Deshalb heute keine Tags wegen fehlender Antworten.\nBetroffene Tage: ' + ', '.join(date.fromisoformat(d).strftime('%d.%m.') for d in uncertain)
     counts = [0, 0, 0]
@@ -145,13 +145,12 @@ def weekly_report(state, monday):
             else:
                 counts[value] += 1
     answered = sum(counts)
-    lines = [title, '', f'🗳 {answered}/{expected} Antworten ({answered / expected:.0%})' if expected else 'Keine aktiven Teilnehmer.',
-             f'💪 {counts[0]}× Liegestütze · 📸 {counts[1]}× Workout · ❌ {counts[2]}× Nein', '',
-             'Noch ohne Antwort – bitte nachtragen 🙌' if missing else 'Alle haben geantwortet – stark! 🙌']
+    lines = [title, '', 'Für diese Tage fehlt noch eure Antwort:' if missing else 'Alle haben geantwortet – danke euch! 🙌']
     for uid, days_missing in sorted(missing.items(), key=lambda item: state['members'][item[0]]['name']):
         name = html.escape(state['members'][uid]['name'])
         lines.append(f'<a href="tg://user?id={int(uid)}">{name}</a>: ' + ', '.join(date.fromisoformat(d).strftime('%d.%m.') for d in days_missing))
-    lines += ['', '„Nein“ zählt als Antwort. Fehlende Antwort bedeutet nicht automatisch fehlendes Training.']
+    if missing:
+        lines += ['', 'Bitte stimmt in den jeweiligen Umfragen ab oder bezahlt den vereinbarten Beitrag. Falls ihr bereits bezahlt habt, gebt bitte kurz Bescheid. 🙌', '', 'Diese Liste zeigt nur fehlende Abstimmungen. Zahlungen werden vom Bot nicht geprüft.']
     return '\n'.join(lines)
 
 

@@ -5,8 +5,9 @@ One scheduled workflow collects non-anonymous votes hourly, sends a dated daily
 previous Monday–Sunday after 08:00 Monday. Runs delayed past Monday catch up once.
 GitHub schedules are best effort, so these are earliest times, not delivery guarantees.
 
-The report includes response rate, counts per answer and one mention per person
-with all missing dates. A negative answer counts as a response. It does not infer
+The weekly message is an actionable reminder: one mention per person with all
+missing dates, asking them to vote or pay the agreed contribution. It shows no
+response percentages or performance statistics and never claims to verify payments. A negative answer counts as a response. It does not infer
 whether training happened when there is no answer. Alternative workouts are
 self-reported; the bot does not verify photos.
 
