@@ -11,6 +11,8 @@ from zoneinfo import ZoneInfo
 import requests
 from cryptography.fernet import Fernet
 
+from motivation import QUOTE_DAYS, choose_quote, daily_target
+
 TZ = ZoneInfo('Europe/Berlin')
 OPTIONS = ['Ja 💪', 'Workout gemacht (Bild gesendet) 📸', 'Nein ❌']
 
@@ -180,8 +182,15 @@ def run(tg, store, state, now, mode='auto'):
             state['polls'][poll['id']] = {'day': today, 'message_id': result['message_id'],
                                          'votes': {}, 'total': 0, 'complete': True}
         send_once(tg, store, state, 'poll:' + today, 'sendPoll',
-                  {'question': f'{now:%d.%m.} · Hast du heute 125 Liegestütze gemacht?',
+                  {'question': f'{now:%d.%m.} · Hast du heute {daily_target(now.date())} Liegestütze gemacht?',
                    'options': [{'text': option} for option in OPTIONS], 'is_anonymous': False, 'allows_multiple_answers': False}, register)
+    if (mode in ('auto', 'poll') and now.hour >= 7
+            and now.weekday() in QUOTE_DAYS
+            and isinstance(state['sent'].get('poll:' + today), int)
+            and 'quote:' + today not in state['sent']):
+        text = choose_quote(state, now.date())
+        store.save(state)
+        send_once(tg, store, state, 'quote:' + today, 'sendMessage', {'text': text})
     # Keep enough history for corrections and week comparisons; limit personal-data retention.
     cutoff = (now.date() - timedelta(days=90)).isoformat()
     state['polls'] = {k: p for k, p in state['polls'].items() if p['day'] >= cutoff}

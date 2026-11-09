@@ -1,7 +1,7 @@
 # Telegram challenge bot
 
 One scheduled workflow collects non-anonymous votes hourly, sends a dated daily
-125-push-up poll after 07:00 Europe/Berlin and reports the
+push-up poll (125 in November 2026, 130 from 1 December 2026) after 07:00 Europe/Berlin and reports the
 previous Monday–Sunday after 08:00 Monday. Runs delayed past Monday catch up once.
 GitHub schedules are best effort, so these are earliest times, not delivery guarantees.
 
@@ -53,7 +53,10 @@ Telegram text mentions use stable user IDs, including members without usernames.
 Actions → Daily Telegram Poll → Run workflow → mode `collect` checks the
 configuration and receives votes without posting. `auto` sends anything due;
 `report` sends last week's report once; `poll` sends today's poll once after 07:00.
-Repeated runs do not resend successful messages. Quotes are not enabled.
+Repeated runs do not resend successful messages. On Tuesdays and Fridays a randomly selected approved German motivation line is
+sent immediately after the poll as a separate message. All 20 lines are used
+before repeating; the choice and send marker are persisted. Numerical references
+use the same date-based target as the poll. No further increases are assumed.
 
 Run `python -m unittest -v` locally or in Actions. Never print raw Requests
 exceptions: the request URL includes the bot token.
