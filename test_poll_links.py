@@ -36,7 +36,7 @@ class PollLinkTest(unittest.TestCase):
         tg.chat = -1001234567890
         run(tg, store, state, datetime(2026, 11, 9, 8, tzinfo=TZ), 'report')
         self.assertEqual(tg.messages[0][1]['link_preview_options'], {'is_disabled': True})
-        run(tg, store, state, datetime(2026, 11, 9, 8, tzinfo=TZ), 'poll')
+        run(tg, store, state, datetime(2026, 11, 9, 9, tzinfo=TZ), 'poll')
         self.assertEqual(state['polls']['new']['chat_id'], tg.chat)
 
 

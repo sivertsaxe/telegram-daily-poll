@@ -2,11 +2,14 @@ name: Daily Telegram Poll
 
 on:
   schedule:
+    - cron: '0 9 * * *'
+      timezone: 'Europe/Berlin'
     - cron: '17 * * * *'
+      timezone: 'Europe/Berlin'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'auto sends due poll/report; collect only reads votes'
+        description: 'poll sends at 09:00 local only; auto collects/reports'
         type: choice
         options: [collect, auto, report, poll]
         default: collect
@@ -37,4 +40,4 @@ jobs:
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           STATE_KEY: ${{ secrets.STATE_KEY }}
           GH_TOKEN: ${{ github.token }}
-          BOT_MODE: ${{ inputs.mode || 'auto' }}
+          BOT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '0 9 * * *' && 'poll' || 'auto') }}

@@ -40,7 +40,7 @@ class MotivationTest(unittest.TestCase):
     def test_only_tuesday_friday_after_poll_without_duplicates(self):
         for offset in range(7):
             state, store, tg = fixture(), Store(), TG()
-            now = datetime(2026, 12, 7 + offset, 7, tzinfo=TZ)
+            now = datetime(2026, 12, 7 + offset, 9, tzinfo=TZ)
             run(tg, store, state, now, 'poll')
             run(tg, store, state, now, 'poll')
             self.assertEqual(tg.messages[0][0], 'sendPoll')

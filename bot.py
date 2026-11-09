@@ -189,7 +189,7 @@ def run(tg, store, state, now, mode='auto'):
         send_once(tg, store, state, 'report:' + monday.isoformat(), 'sendMessage',
                   {'text': weekly_report(state, monday, tg.chat), 'parse_mode': 'HTML',
                    'link_preview_options': {'is_disabled': True}})
-    if mode in ('auto', 'poll') and now.hour >= 7:
+    if mode == 'poll' and now.hour == 9:
         def register(result):
             poll = result['poll']
             state['polls'][poll['id']] = {'day': today, 'message_id': result['message_id'],
@@ -198,7 +198,7 @@ def run(tg, store, state, now, mode='auto'):
         send_once(tg, store, state, 'poll:' + today, 'sendPoll',
                   {'question': f'{now:%d.%m.} · Hast du heute {daily_target(now.date())} Liegestütze gemacht?',
                    'options': [{'text': option} for option in OPTIONS], 'is_anonymous': False, 'allows_multiple_answers': False}, register)
-    if (mode in ('auto', 'poll') and now.hour >= 7
+    if (mode == 'poll' and now.hour == 9
             and now.weekday() in QUOTE_DAYS
             and isinstance(state['sent'].get('poll:' + today), int)
             and 'quote:' + today not in state['sent']):

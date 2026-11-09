@@ -1,7 +1,7 @@
 # Telegram challenge bot
 
 One scheduled workflow collects non-anonymous votes hourly, sends a dated daily
-push-up poll (125 in November 2026, 130 from 1 December 2026) after 07:00 Europe/Berlin and reports the
+push-up poll (125 in November 2026, 130 from 1 December 2026) at 09:00 Europe/Berlin and reports the
 previous Monday–Sunday after 08:00 Monday. Runs delayed past Monday catch up once.
 GitHub schedules are best effort, so these are earliest times, not delivery guarantees.
 
@@ -51,8 +51,8 @@ Telegram text mentions use stable user IDs, including members without usernames.
 ## Manual use
 
 Actions → Daily Telegram Poll → Run workflow → mode `collect` checks the
-configuration and receives votes without posting. `auto` sends anything due;
-`report` sends last week's report once; `poll` sends today's poll once after 07:00.
+configuration and receives votes without posting. `auto` collects votes and sends a due weekly report;
+`report` sends last week's report once; `poll` sends today's poll once during the 09:00–09:59 local window.
 Repeated runs do not resend successful messages. On Tuesdays and Fridays a randomly selected approved German motivation line is
 sent immediately after the poll as a separate message. All 20 lines are used
 before repeating; the choice and send marker are persisted. Numerical references
@@ -69,3 +69,7 @@ members. The bot records the chat and message ID with each new poll. Older store
 polls with a message ID use the configured group ID. Historical imports without
 message IDs remain plain dates; no URLs or message IDs are guessed. Link previews
 are disabled in the weekly message. Existing weekly messages are not re-sent.
+
+## Daily poll timing
+
+The poll has its own `0 9 * * *` schedule in Europe/Berlin, including daylight saving time. The hourly schedule only collects votes and handles weekly reports. Polls and their motivation lines can be sent only during 09:00–09:59 local time; delayed morning runs outside that window skip sending rather than post in the evening. GitHub Actions scheduling is best effort, not an exact-time delivery guarantee. Manual `auto` runs do not send polls.

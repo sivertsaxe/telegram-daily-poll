@@ -123,7 +123,7 @@ class BotTest(unittest.TestCase):
                     self.payload = payload
                     return {'message_id': 5, 'poll': {'id': 'new'}}
             tg = TG()
-            now = datetime(*day, 7, tzinfo=TZ)
+            now = datetime(*day, 9, tzinfo=TZ)
             run(tg, store, s, now, 'poll')
             run(tg, store, s, now, 'poll')
             self.assertEqual(tg.calls, 1)
