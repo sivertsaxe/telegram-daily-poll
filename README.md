@@ -51,7 +51,7 @@ Telegram text mentions use stable user IDs, including members without usernames.
 ## Manual use
 
 Actions → Daily Telegram Poll → Run workflow → mode `collect` checks the
-configuration and receives votes without posting. `auto` collects votes and sends a due weekly report;
+configuration and receives votes without posting. `auto` collects votes, sends a due weekly report and can recover a poll during the 09:00 hour;
 `report` sends last week's report once; `poll` sends today's poll once during the 09:00–09:59 local window.
 Repeated runs do not resend successful messages. On Tuesdays and Fridays a randomly selected approved German motivation line is
 sent immediately after the poll as a separate message. All 20 lines are used
@@ -72,4 +72,10 @@ are disabled in the weekly message. Existing weekly messages are not re-sent.
 
 ## Daily poll timing
 
-The poll has its own `0 9 * * *` schedule in Europe/Berlin, including daylight saving time. The hourly schedule only collects votes and handles weekly reports. Polls and their motivation lines can be sent only during 09:00–09:59 local time; delayed morning runs outside that window skip sending rather than post in the evening. GitHub Actions scheduling is best effort, not an exact-time delivery guarantee. Manual `auto` runs do not send polls.
+The poll has its own `0,10,20,30,40,50 9 * * *` schedule in Europe/Berlin, including daylight saving time. The hourly schedule collects votes, handles weekly reports and can recover a missing poll during the 09:00 hour. Polls and their motivation lines can be sent only during 09:00–09:59 local time; delayed morning runs outside that window skip sending rather than post in the evening. GitHub Actions scheduling is best effort, not an exact-time delivery guarantee. `auto` sends a poll only during the 09:00 hour if one is missing.
+
+## Missed-run recovery
+
+Morning poll attempts run at 09:00, 09:10, 09:20, 09:30, 09:40 and 09:50 local time. The hourly collector also recovers a missing poll if it runs during 09:00–09:59. Persistent send markers prevent duplicates. A delayed morning attempt outside that window fails visibly if today's poll is missing, rather than silently reporting success. GitHub can delay all attempts; this improves resilience but cannot guarantee 09:00 delivery.
+
+To recover a missed day after explicit approval, manually select `poll_now` and enter today's Europe/Berlin date in `recovery_date`. This sends only today's dated poll once, without a weekly report or motivational text. Scheduled runs cannot use recovery. No credentials or private payloads are logged.

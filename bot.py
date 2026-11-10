@@ -184,12 +184,19 @@ def run(tg, store, state, now, mode='auto'):
     today = now.date().isoformat()
     if mode == 'collect':
         return
+    recovery = mode == 'poll_now'
+    if recovery and (os.environ.get('GITHUB_EVENT_NAME') != 'workflow_dispatch'
+                     or os.environ.get('BOT_RECOVERY_DATE') != today):
+        raise ServiceError('Manual recovery requires workflow_dispatch and an explicit matching recovery date')
+    poll_due = recovery or (mode in ('poll', 'auto') and now.hour == 9)
+    if mode == 'poll' and now.hour != 9 and 'poll:' + today not in state['sent']:
+        raise ServiceError('Morning poll was missed: scheduled run started outside 09:00-09:59 Europe/Berlin; no poll sent. Use explicit manual recovery.')
     if mode == 'report' or (mode == 'auto' and (now.weekday() > 0 or now.hour >= 8)):
         monday = now.date() - timedelta(days=now.weekday() + 7)
         send_once(tg, store, state, 'report:' + monday.isoformat(), 'sendMessage',
                   {'text': weekly_report(state, monday, tg.chat), 'parse_mode': 'HTML',
                    'link_preview_options': {'is_disabled': True}})
-    if mode == 'poll' and now.hour == 9:
+    if poll_due:
         def register(result):
             poll = result['poll']
             state['polls'][poll['id']] = {'day': today, 'message_id': result['message_id'],
@@ -198,7 +205,7 @@ def run(tg, store, state, now, mode='auto'):
         send_once(tg, store, state, 'poll:' + today, 'sendPoll',
                   {'question': f'{now:%d.%m.} · Hast du heute {daily_target(now.date())} Liegestütze gemacht?',
                    'options': [{'text': option} for option in OPTIONS], 'is_anonymous': False, 'allows_multiple_answers': False}, register)
-    if (mode == 'poll' and now.hour == 9
+    if (poll_due and not recovery
             and now.weekday() in QUOTE_DAYS
             and isinstance(state['sent'].get('poll:' + today), int)
             and 'quote:' + today not in state['sent']):
