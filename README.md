@@ -1,81 +1,29 @@
 # Telegram challenge bot
 
-One scheduled workflow collects non-anonymous votes hourly, sends a dated daily
-push-up poll (125 in November 2026, 130 from 1 December 2026) at 09:00 Europe/Berlin and reports the
-previous Monday–Sunday after 08:00 Monday. Runs delayed past Monday catch up once.
-GitHub schedules are best effort, so these are earliest times, not delivery guarantees.
+Production runs on Cloudflare Workers with one SQLite-backed Durable Object. GitHub stores source and a manual deploy workflow; both former GitHub schedules are retired and their legacy workflows send nothing.
 
-The weekly message is an actionable reminder: one mention per person with all
-missing dates. The message ends after the list of names and dates. It shows no
-response percentages or performance statistics and never claims to verify payments. A negative answer counts as a response. It does not infer
-whether training happened when there is no answer. Alternative workouts are
-self-reported; the bot does not verify photos.
+- Daily poll: 09:00 Europe/Berlin.
+- Daily reminder: 21:00 Europe/Berlin.
+- Missing-answer report: Monday after 08:00 for the previous Monday–Sunday.
+- Approved motivation lines: Tuesday and Friday after the poll, shuffled without repetition until all 20 have been used.
+- Confirmed target: 125 in November 2026, 130 from 1 December 2026; no further increases assumed.
 
-## Configuration
+The minutely Cloudflare trigger evaluates local time, including daylight saving time. Durable send markers prevent repeated invocations from sending duplicate messages. Scheduled delivery remains best effort; this removes the dependency on GitHub runner queues.
 
-Repository Actions secrets: `TG_TOKEN`, `TG_CHAT_ID`, `STATE_KEY` (Fernet key).
-`state.enc` contains only authenticated ciphertext. Never commit the key, plaintext
-roster, vote exports, chat IDs or decrypted state. Do not upload plaintext artifacts.
-The token supplied by GitHub is restricted to this repository's contents permission.
-All runs use the same concurrency group and optimistic state writes.
+The Monday message is an actionable reminder: one mention per person and clickable missing dates. It ends after the date lists. Any poll answer, including a negative answer, counts as a response. No response percentages, payment checks or claims to verify training/photos are included. Incomplete collection or mismatched vote totals suppress missing-answer tags.
 
-The hourly encrypted-state commits also provide repository activity, preventing
-normal 60-day inactivity of this public repository. They cannot guarantee GitHub
-availability, prevent administrative disabling or overcome revoked credentials.
-Workflow errors fail visibly; check Actions and your GitHub failure notifications.
+## Operations
 
-Only this workflow may call getUpdates for this bot. An existing webhook stops
-collection safely. The separate reminder.py repository retains the existing reminder schedule.
-This workflow does not send daily reminders, avoiding duplicates.
+See [Cloudflare deployment and cutover instructions](cloudflare/README.md). The manual **Deploy Cloudflare bot** workflow supports `stage`, `activate`, `update` and `deactivate`. Use `update` for normal code changes; it preserves live state. Do not run the legacy Python collector while Cloudflare is active.
 
-## Reliability
+The live encrypted state is in the Durable Object. Root `state.enc` is the final GitHub-era migration snapshot, not a current backup. Migration preserves answers, member eligibility, Telegram offsets, poll message IDs, quote choices and all send markers. The authenticated export endpoint provides current encrypted backups.
 
-Updates are saved before their offset is acknowledged. Vote changes replace the
-previous vote; retractions remove it. A collection gap over 23 hours marks tracked
-polls uncertain, because Telegram retains updates for at most 24 hours. Missing
-polls, uncertain collection or mismatched voter totals suppress all missing-answer
-mentions for that report. Historical imports are explicit snapshots from Telegram.
+Cloudflare secrets: `TG_TOKEN`, `TG_CHAT_ID`, `STATE_KEY`. GitHub Actions retains the same secrets for deployment plus `CLOUDFLARE_API_TOKEN`. The deploy token is needed only for deployments; its expiration does not stop the running bot. Never commit tokens, keys, plaintext participant lists or decrypted answers.
 
-Send intent is saved before posting. A timeout may have sent the message already;
-a `pending` marker stops retries. Inspect Telegram, then repair the encrypted
-marker (set the actual message ID if delivered, or remove it only when confirmed
-not delivered). Do not delete/reset state to fix a send failure. Back up STATE_KEY
-securely before rotation; old encrypted commits remain in Git history.
+Public status: https://telegram-challenge-bot.sivertsaxe-2e9.workers.dev/health. It exposes only readiness, activation, last tick and sanitized status. Check Cloudflare Workers observability for failed scheduled invocations. An ambiguous Telegram send persists a pending marker and stops retries until an operator checks whether the message arrived. Never reset state to resolve delivery problems.
 
-Current state keeps polls for 90 days. Git history retains old ciphertext, so this
-is not secure deletion of historical ciphertext. New members are eligible from
-their join date, leaving ends eligibility. Initial roster is a manually verified
-snapshot; admins should review eligibility if someone is an organizer or exempt.
-Telegram text mentions use stable user IDs, including members without usernames.
+Updates are saved before Telegram acknowledges their offset. Gaps over 23 hours mark tracked polls incomplete. Poll history is kept for 90 days; historical Git ciphertext remains in Git history. New members are eligible from their join date; leaving ends eligibility. Mentions use Telegram user IDs. Poll links work only for members and are not invented when old message IDs are unavailable.
 
-## Manual use
+## Checks
 
-Actions → Daily Telegram Poll → Run workflow → mode `collect` checks the
-configuration and receives votes without posting. `auto` collects votes, sends a due weekly report and can recover a poll during the 09:00 hour;
-`report` sends last week's report once; `poll` sends today's poll once during the 09:00–09:59 local window.
-Repeated runs do not resend successful messages. On Tuesdays and Fridays a randomly selected approved German motivation line is
-sent immediately after the poll as a separate message. All 20 lines are used
-before repeating; the choice and send marker are persisted. Numerical references
-use the same date-based target as the poll. No further increases are assumed.
-
-Run `python -m unittest -v` locally or in Actions. Never print raw Requests
-exceptions: the request URL includes the bot token.
-
-## Links to missing polls
-
-Each missing date links to its original poll using Telegram's private message
-links (`https://t.me/c/<supergroup-id>/<message-id>`). These work only for group
-members. The bot records the chat and message ID with each new poll. Older stored
-polls with a message ID use the configured group ID. Historical imports without
-message IDs remain plain dates; no URLs or message IDs are guessed. Link previews
-are disabled in the weekly message. Existing weekly messages are not re-sent.
-
-## Daily poll timing
-
-The poll has its own `0,10,20,30,40,50 9 * * *` schedule in Europe/Berlin, including daylight saving time. The hourly schedule collects votes, handles weekly reports and can recover a missing poll during the 09:00 hour. Polls and their motivation lines can be sent only during 09:00–09:59 local time; delayed morning runs outside that window skip sending rather than post in the evening. GitHub Actions scheduling is best effort, not an exact-time delivery guarantee. `auto` sends a poll only during the 09:00 hour if one is missing.
-
-## Missed-run recovery
-
-Morning poll attempts run at 09:00, 09:10, 09:20, 09:30, 09:40 and 09:50 local time. The hourly collector also recovers a missing poll if it runs during 09:00–09:59. Persistent send markers prevent duplicates. A delayed morning attempt outside that window fails visibly if today's poll is missing, rather than silently reporting success. GitHub can delay all attempts; this improves resilience but cannot guarantee 09:00 delivery.
-
-To recover a missed day after explicit approval, manually select `poll_now` and enter today's Europe/Berlin date in `recovery_date`. This sends only today's dated poll once, without a weekly report or motivational text. Scheduled runs cannot use recovery. No credentials or private payloads are logged.
+In `cloudflare/`: `npm ci`, `npm test`, `npm run check`. The retained Python implementation and its tests document the former system; they are not scheduled in production.
