@@ -92,3 +92,8 @@ test('preflight only checks configuration and never consumes or sends',async()=>
   assert.deepEqual(methods,['getMe','getChat','getWebhookInfo']);
   await assert.rejects(()=>preflight({...tg,async call(m){return m==='getMe'?{is_bot:true}:m==='getChat'?{id:this.chat}:{url:'https://example.com'};}}));
 });
+
+test('large history encrypts without argument-size failures',async()=>{
+ const state=fixture();state.test_padding='x'.repeat(300000);
+ assert.deepEqual(await decryptState(await encryptState(state,key),key),state);
+});

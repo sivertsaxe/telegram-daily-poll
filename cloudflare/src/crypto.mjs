@@ -2,7 +2,11 @@ const enc = new TextEncoder();
 export function unbase64(value) {
   return Uint8Array.from(atob(value.trim().replaceAll('-', '+').replaceAll('_', '/')), c => c.charCodeAt(0));
 }
-export function base64(bytes) { return btoa(String.fromCharCode(...bytes)); }
+export function base64(bytes) {
+  let binary='';
+  for(let i=0;i<bytes.length;i+=8192) binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  return btoa(binary);
+}
 export async function encryptState(state, secret) {
   const key = await crypto.subtle.importKey('raw', unbase64(secret), 'AES-GCM', false, ['encrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
