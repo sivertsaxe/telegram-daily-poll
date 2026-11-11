@@ -1,0 +1,22 @@
+export const QUOTES = [
+  "Motivation kommt und geht. Die {target} bleiben.",
+  "Du musst nicht alle auf einmal schaffen. Aber anfangen musst du.",
+  "Deine Ausrede hat heute schon mehr Wiederholungen als du.",
+  "Der schwierigste Liegestütz ist der erste. Also bring ihn hinter dich.",
+  "Heute durchziehen. Morgen froh sein, dass du es gemacht hast.",
+  "{target} Liegestütze werden vom Nachdenken nicht weniger.",
+  "Disziplin heißt: auch dann anfangen, wenn das Sofa gute Argumente hat.",
+  "Die Liegestütze von heute kannst du morgen nicht mehr gestern machen.",
+  "Du wartest auf Motivation? Mach schon mal zehn, solange du wartest.",
+  "Der Boden ist da. Du bist da. Beste Voraussetzungen.",
+  "Ein schlechter Tag kann trotzdem ein guter Trainingstag werden.",
+  "Du musst heute keinen Rekord brechen. Nur dein Versprechen halten.",
+  "Kleine Sätze. Kurze Pausen. Keine große Diskussion.",
+  "Dein zukünftiges Ich wird dir danken. Dein Sofa wird es verkraften.",
+  "Es wird nicht jeden Tag leichter. Aber du wirst stärker.",
+  "Erst die Wiederholungen. Dann die Erfolgsgeschichte.",
+  "Gemeinsam angefangen. Gemeinsam durchziehen. Bis zur JuWeiFei.",
+  "Die Weihnachtsfeier kommt näher. Die Liegestütze machen sich nicht von allein.",
+  "Auch zehn auf einmal bringen dich ans Ziel. Null auf einmal eher nicht.",
+  "Motivation ist gut. Gemachte Liegestütze sind besser."
+];

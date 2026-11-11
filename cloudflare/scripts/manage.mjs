@@ -1,0 +1,11 @@
+import {readFile} from 'node:fs/promises';
+import {adminToken} from '../src/crypto.mjs';
+const [action,url]=process.argv.slice(2);
+if (!['import','check','activate','deactivate','health'].includes(action)||!/^https:\/\/[a-z0-9.-]+\.workers\.dev$/.test(url||'')) throw new Error('Specify action and Workers HTTPS origin');
+const headers={'Authorization':'Bearer '+await adminToken(process.env.STATE_KEY)};
+let body;
+if(action==='import') body=await readFile('../state.enc','utf8');
+if(action==='activate') body=JSON.stringify({previous_scheduler_stopped:process.env.PREVIOUS_SCHEDULER_STOPPED==='true'});
+const response=await fetch(url+(action==='health'?'/health':'/admin/'+action),{method:action==='health'?'GET':'POST',headers,body,signal:AbortSignal.timeout(30000)});
+if(!response.ok) throw new Error(`Worker ${action} failed (${response.status}); no credentials printed`);
+console.log(JSON.stringify(await response.json()));
