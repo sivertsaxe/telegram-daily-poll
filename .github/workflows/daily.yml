@@ -1,49 +1,10 @@
-name: Daily Telegram Poll
-
+name: Legacy Telegram Poll (retired)
 on:
-  schedule:
-    - cron: '0,10,20,30,40,50 9 * * *'
-      timezone: 'Europe/Berlin'
-    - cron: '17 * * * *'
-      timezone: 'Europe/Berlin'
   workflow_dispatch:
-    inputs:
-      mode:
-        description: 'poll sends at 09:00 local only; auto collects/reports'
-        type: choice
-        options: [collect, auto, report, poll, poll_now]
-        default: collect
-      recovery_date:
-        description: 'Only for poll_now: explicitly approved date YYYY-MM-DD'
-        type: string
-        default: ''
-
 permissions:
-  contents: write
-
-concurrency:
-  group: telegram-bot-state
-  cancel-in-progress: false
-
+  contents: read
 jobs:
-  run:
+  retired:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install -r requirements.txt
-      - run: python -m unittest -v
-      - run: python bot.py
-        env:
-          TG_TOKEN: ${{ secrets.TG_TOKEN }}
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          STATE_KEY: ${{ secrets.STATE_KEY }}
-          GH_TOKEN: ${{ github.token }}
-          BOT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '17 * * * *' && 'auto' || 'poll') }}
-
-          BOT_RECOVERY_DATE: ${{ inputs.recovery_date }}
+      - run: echo 'Scheduling and vote collection moved to Cloudflare. This legacy workflow sends nothing.'
